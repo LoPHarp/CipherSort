@@ -1,8 +1,9 @@
 #include "gui.h"
 #include "file.h"
+#include "UserInput.h"
 
+#include <iostream>
 #include <string>
-#include <cctype>
 
 using namespace std;
 
@@ -10,33 +11,16 @@ void menu()
 {
 	while (true)
 	{
+		ConsoleClear();
+
 		cout << "1. Set File" << endl;
-		cout << ": " << endl;
 
-		string choise;
-		cin >> choise;
+		int choise = InputDigitalValue();
 
-		bool isNumber = true;
-		for (char c : choise)
-			if (!isdigit(c))
-			{
-				isNumber = false;
-				break;
-			}
-
-		int number = 0;
-		if (isNumber)
-			number = stoi(choise);
-		else
-		{
-			cout << "Only digital value!\n\n" << endl;
-			continue;
-		}
-
-		switch (number)
+		switch (choise)
 		{
 			case 1:
-				setFile();
+				setFolder();
 				break;
 
 		}

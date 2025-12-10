@@ -130,10 +130,12 @@
     <ClCompile Include="BetterConertor.cpp" />
     <ClCompile Include="file.cpp" />
     <ClCompile Include="gui.cpp" />
+    <ClCompile Include="UserInput.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="file.h" />
     <ClInclude Include="gui.h" />
+    <ClInclude Include="UserInput.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

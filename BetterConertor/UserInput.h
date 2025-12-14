@@ -2,6 +2,6 @@
 
 #include <string>
 
-void ConsoleClear();
 int InputDigitalValue();
 std::string InputString();
+int CheckInputType(const std::string& input);

@@ -1,2 +1,2 @@
-D:\C++_Projects\CipherSort\src
-D:\C++_Projects\CipherSort\src\SavedPath.txt
+D:\C++_Projects
+D:\C++_Projects\Tests.txt

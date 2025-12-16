@@ -132,7 +132,9 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Features\FileCipher.cpp" />
     <ClCompile Include="Features\FileSelector.cpp" />
+    <ClCompile Include="Features\FileSorter.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="UI\gui.cpp" />
     <ClCompile Include="UI\UserInput.cpp" />
@@ -140,7 +142,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Config.h" />
+    <ClInclude Include="Features\FileCipher.h" />
     <ClInclude Include="Features\FileSelector.h" />
+    <ClInclude Include="Features\FileSorter.h" />
     <ClInclude Include="UI\gui.h" />
     <ClInclude Include="UI\UserInput.h" />
     <ClInclude Include="UI\View.h" />

@@ -36,6 +36,12 @@
     <ClCompile Include="Features\FileSelector.cpp">
       <Filter>Features</Filter>
     </ClCompile>
+    <ClCompile Include="Features\FileCipher.cpp">
+      <Filter>Features</Filter>
+    </ClCompile>
+    <ClCompile Include="Features\FileSorter.cpp">
+      <Filter>Features</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Config.h">
@@ -51,6 +57,12 @@
       <Filter>UI</Filter>
     </ClInclude>
     <ClInclude Include="Features\FileSelector.h">
+      <Filter>Features</Filter>
+    </ClInclude>
+    <ClInclude Include="Features\FileCipher.h">
+      <Filter>Features</Filter>
+    </ClInclude>
+    <ClInclude Include="Features\FileSorter.h">
       <Filter>Features</Filter>
     </ClInclude>
   </ItemGroup>

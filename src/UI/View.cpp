@@ -28,7 +28,7 @@ void ViewMainMenu()
 {
 	ConsoleClear();
 	cout << "1 Set File" << endl;
-	cout << "2 Set File" << endl;
+	cout << "2 Sorte File" << endl;
 }
 
 void ViewsetFolderMenu()
@@ -37,6 +37,26 @@ void ViewsetFolderMenu()
 	cout << "1 Enter the full path manually" << endl;
 	cout << "2 Navigate step by step by selecting folders/files" << endl;
 	cout << "3 Select using Windows Dialog (Standard)" << endl;
+	cout << "4 Return(Exit)" << endl;
+}
+
+void ViewSortedMenu()
+{
+	ConsoleClear();
+	cout << "1 Sort by the first 5 characters" << endl;
+	cout << "2 Sort by first N chars" << endl;
+	cout << "3 Sort by user-specified characters" << endl;
+	cout << "4 Standard alphabetical sort" << endl;
+	cout << "5 Return(Exit)" << endl;
+}
+
+void ViewFinalSortedMenu(const string& fileName)
+{
+	ConsoleClear();
+
+	cout << "1 Save sorted file (as Sorted_" << fileName << ")" << endl;
+	cout << "2 Save and Open sorted file" << endl;
+	cout << "3 Print sorted file" << endl;
 	cout << "4 Return(Exit)" << endl;
 }
 
@@ -89,4 +109,26 @@ void printError(string mes)
 {
 	cerr << "Error: " << mes << endl;
 	Countdown();
+}
+
+void PrintData(const vector<string>& data)
+{
+	ConsoleClear();
+	for (const auto& line : data)
+		cout << line << endl;
+	cout << endl;
+	system("pause");
+}
+
+void PrintData(const vector<Group>& groups)
+{
+	ConsoleClear();
+	for (const auto& group : groups)
+	{
+		for (const auto& line : group.Lines)
+			cout << "  " << line << endl;
+		cout << endl;
+	}
+	cout << endl;
+	system("pause");
 }

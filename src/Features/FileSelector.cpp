@@ -349,3 +349,27 @@ void FileSelect()
 			return;
 	}
 }
+
+string GetFilePath()
+{
+	ifstream in(FileToSavePath);
+	if (!in)
+		return "";
+
+	string FolderPath, FilePath;
+	getline(in, FolderPath);
+	getline(in, FilePath);
+	in.close();
+
+	if (fs::exists(FilePath) && fs::is_regular_file(FilePath))
+		return FilePath;
+
+	return "";
+}
+
+string GetFileName()
+{
+	fs::path p(GetFilePath());
+	string FileName = p.filename().string();
+	return FileName;
+}

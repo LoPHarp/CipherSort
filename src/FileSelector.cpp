@@ -1,4 +1,4 @@
-#include "file.h"
+#include "FileSelector.h"
 #include "UserInput.h"
 #include "View.h"
 #include "Config.h"
@@ -123,7 +123,7 @@ bool IsFileSelected()
 	return false;
 }
 
-void setFolder()
+void FileSelect()
 {
 	int choice = 0;
 	while (true)
@@ -158,7 +158,23 @@ void setFolder()
 		case 2: 
 		{
 			bool start = true;
+
 			string FolderOrFilePath;
+			ifstream in(FileToSavePath);
+			if(in.is_open())
+			{
+				string savedFolder;
+				getline(in, savedFolder);
+				in.close();
+
+				fs::path p(savedFolder);
+				if (!savedFolder.empty() && fs::exists(p) && fs::is_directory(p))
+				{
+					FolderOrFilePath = savedFolder;
+					start = false;
+				}
+			}
+
 			while (true)
 			{
 				if (start)
@@ -279,6 +295,11 @@ void setFolder()
 							{
 								start = true; 
 							}
+						}
+						else if (charInput == 'd')
+						{
+							start = true;
+							FolderOrFilePath = "";
 						}
 						else if (charInput == 's')
 						{

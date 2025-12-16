@@ -1,4 +1,4 @@
 #pragma once
 
-void setFolder();
+void FileSelect();
 bool IsFileSelected();

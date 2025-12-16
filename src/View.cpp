@@ -27,7 +27,7 @@ void Countdown(int seconds)
 void ViewMainMenu()
 {
 	ConsoleClear();
-	cout << "1 Set Folder" << endl;
+	cout << "1 Set File" << endl;
 	cout << "2 Set File" << endl;
 }
 
@@ -49,6 +49,7 @@ void ViewFileSystemElements(const vector<string>& items, const string& currentPa
 	{
 		cout << "s Save folder path and leave" << endl;
 		cout << "b Back at 1 step" << endl;
+		cout << "d Go to Drives (Root)" << endl;
 	}
 	cout << "-------------------------------------------" << endl;
 	int count = 1;

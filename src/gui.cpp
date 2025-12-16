@@ -1,5 +1,5 @@
 #include "gui.h"
-#include "file.h"
+#include "FileSelector.h"
 #include "UserInput.h"
 #include "View.h"
 
@@ -18,7 +18,7 @@ void menu()
 		switch (choise)
 		{
 			case 1:
-				setFolder();
+				FileSelect();
 				break;
 			case 2:
 				break;

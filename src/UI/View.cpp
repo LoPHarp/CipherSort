@@ -30,6 +30,10 @@ void ViewMainMenu()
 	cout << "1 Set File" << endl;
 	cout << "2 Sorte File" << endl;
 	cout << "3 Cipher File" << endl;
+	cout << "--- File Actions ---" << endl;
+	cout << "4 View Content (Console)" << endl;
+	cout << "5 Open File Folder" << endl;
+	cout << "6 Open File" << endl;
 }
 
 void ViewsetFolderMenu()

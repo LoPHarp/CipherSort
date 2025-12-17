@@ -2,6 +2,7 @@
 #include "FileSelector.h"
 #include "FileSorter.h"
 #include "FileCipher.h"
+#include "FileActions.h"
 #include "UserInput.h"
 #include "View.h"
 
@@ -48,6 +49,28 @@ void menu()
 				}
 				break;
 			}
+			case 4:
+			{
+				string currentPath = GetFilePath();
+				if (!currentPath.empty()) ActionViewContent(currentPath);
+				else printError("File is not selected!");
+				break;
+			}
+			case 5:
+			{
+				string currentPath = GetFilePath();
+				if (!currentPath.empty()) ActionOpenFolder(currentPath);
+				else printError("File is not selected!");
+				break;
+			}
+			case 6:
+			{
+				string currentPath = GetFilePath();
+				if (!currentPath.empty()) ActionOpenFile(currentPath);
+				else printError("File is not selected!");
+				break;
+			}
+
 		}
 			
 

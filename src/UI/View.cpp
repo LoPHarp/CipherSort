@@ -29,6 +29,7 @@ void ViewMainMenu()
 	ConsoleClear();
 	cout << "1 Set File" << endl;
 	cout << "2 Sorte File" << endl;
+	cout << "3 Cipher File" << endl;
 }
 
 void ViewsetFolderMenu()

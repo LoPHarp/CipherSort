@@ -360,4 +360,15 @@ MigrationBackup/
 .ionide/
 
 # Fody - auto-generated XML schema
-FodyWeavers.xsdSavedPath.txt
+FodyWeavers.xsd
+
+# --- Project Specific Files ---
+# Config file
+SavedPath.txt
+src/SavedPath.txt
+
+# Generated output files (do not commit these)
+Sorted_*.txt
+src/Sorted_*.txt
+Crypted_*.txt
+src/Crypted_*.txt

@@ -21,6 +21,8 @@ void menu()
 
 		switch (choise)
 		{
+			case 0:
+				return;
 			case 1:
 				FileSelect();
 				break;

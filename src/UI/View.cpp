@@ -27,6 +27,7 @@ void Countdown(int seconds)
 void ViewMainMenu()
 {
 	ConsoleClear();
+	cout << "0 Return(Exit)" << endl;
 	cout << "1 Set File" << endl;
 	cout << "2 Sorte File" << endl;
 	cout << "3 Cipher File" << endl;

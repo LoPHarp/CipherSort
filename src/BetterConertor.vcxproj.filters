@@ -42,7 +42,10 @@
     <ClCompile Include="Features\FileSorter.cpp">
       <Filter>Features</Filter>
     </ClCompile>
-    <ClCompile Include="FileActions.cpp">
+    <ClCompile Include="Features\FileActions.cpp">
+      <Filter>Features</Filter>
+    </ClCompile>
+    <ClCompile Include="Features\LinkExecutor.cpp">
       <Filter>Features</Filter>
     </ClCompile>
   </ItemGroup>
@@ -68,7 +71,10 @@
     <ClInclude Include="Features\FileSorter.h">
       <Filter>Features</Filter>
     </ClInclude>
-    <ClInclude Include="FileActions.h">
+    <ClInclude Include="Features\FileActions.h">
+      <Filter>Features</Filter>
+    </ClInclude>
+    <ClInclude Include="Features\LinkExecutor.h">
       <Filter>Features</Filter>
     </ClInclude>
   </ItemGroup>

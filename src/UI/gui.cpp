@@ -5,6 +5,7 @@
 #include "FileActions.h"
 #include "UserInput.h"
 #include "View.h"
+#include "LinkExecutor.h"
 
 #include <iostream>
 #include <string>
@@ -70,7 +71,13 @@ void menu()
 				else printError("File is not selected!");
 				break;
 			}
-
+			case 7:
+			{
+				string currentPath = GetFilePath();
+				if (!currentPath.empty()) ActionOpenLinks(currentPath);
+				else printError("File is not selected!");
+				break;
+			}
 		}
 			
 

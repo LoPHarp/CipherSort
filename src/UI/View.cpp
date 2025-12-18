@@ -34,6 +34,7 @@ void ViewMainMenu()
 	cout << "4 View Content (Console)" << endl;
 	cout << "5 Open File Folder" << endl;
 	cout << "6 Open File" << endl;
+	cout << "7 Open Links" << endl;
 }
 
 void ViewsetFolderMenu()

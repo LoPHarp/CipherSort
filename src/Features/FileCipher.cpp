@@ -13,133 +13,96 @@
 using namespace std;
 namespace fs = std::filesystem;
 
-const string FILE_SIGNATURE = "CHECK_PASS_OK";
+const string FILE_SIGNATURE = "CPSORT";
 
-void FileCipher(const string& path)
+CipherResult XOR(const string& key, ifstream& in, ofstream& out)
 {
-	if (path.empty()) 
+	const size_t BUFFER_SIZE = 65536;
+	vector<char> buffer(BUFFER_SIZE);
+	size_t totalProcessed = 0;
+
+	while (in.read(buffer.data(), BUFFER_SIZE) || in.gcount() > 0)
 	{
-		printError("Internal Error: FileCipher received empty path!");
-		return;
+		size_t bytesRead = in.gcount();
+
+		for (size_t i = 0; i < bytesRead; i++)
+			buffer[i] ^= key[(totalProcessed + i) % key.length()];
+
+		out.write(buffer.data(), bytesRead);
+		totalProcessed += bytesRead;
 	}
 
-	ConsoleClear();
-	cout << "Enter encryption key (password): ";
-	string key = InputString();
+	return CipherResult::Success;
+}
 
-	if (key.empty())
+CipherResult ProcessFile(const string& key, CipherMode mode, const string& inpath, const string& outpath, bool DeleteInputFile, CipherMethod method)
+{
+	ifstream in(inpath, ios::binary);
+	if (!in.is_open())
+		return CipherResult::FileNotFound;
+
+	in.seekg(0, ios::end);
+	if (in.tellg() == 0)
+		return CipherResult::EmptyFile;
+	in.seekg(0, ios::beg);
+
+	ofstream out(outpath, ios::binary);
+	if (!out.is_open())
+		return CipherResult::SaveError;
+
+	if (mode == CipherMode::Encrypt)
 	{
-		printError("Key cannot be empty! Operation canceled.");
-		return;
-	}
+		string HeaderSignature = FILE_SIGNATURE + (method == CipherMethod::XOR ? 'X' : 'R');
 
-	ifstream in(path, ios::binary);
-	if (!in.is_open()) 
-	{
-		printError("Cannot open file!");
-		return;
-	}
+		for (size_t i = 0; i < HeaderSignature.size(); i++)
+			HeaderSignature[i] ^= key[i % key.length()];
 
-	vector<char> buffer((istreambuf_iterator<char>(in)), istreambuf_iterator<char>());
-	in.close();
-
-	if (buffer.empty()) 
-	{
-		printError("File is empty!");
-		return;
-	}
-
-	fs::path p(path);
-	string filename = p.filename().string();
-	bool isDecryptionMode = (filename.find("Crypted_") == 0);
-
-	if (isDecryptionMode)
-	{
-		cout << "Mode: Decryption..." << endl;
-
-		if (buffer.size() < FILE_SIGNATURE.length())
-		{
-			printError("File is corrupted (too small) or not encrypted by this program.");
-			return;
-		}
-
-		vector<char> checkBuffer;
-		for (size_t i = 0; i < FILE_SIGNATURE.length(); i++)
-			checkBuffer.push_back(buffer[i]);
-
-		for (size_t i = 0; i < checkBuffer.size(); i++)
-		{
-			checkBuffer[i] = checkBuffer[i] ^ key[i % key.length()];
-		}
-
-		string decryptedSignature(checkBuffer.begin(), checkBuffer.end());
-		if (decryptedSignature != FILE_SIGNATURE)
-		{
-			printError("WRONG PASSWORD! Operation aborted. File remains safe.");
-			return;
-		}
-
-		cout << "Password correct! Decrypting..." << endl;
-
-		for (size_t i = 0; i < buffer.size(); i++)
-		{
-			buffer[i] = buffer[i] ^ key[i % key.length()];
-		}
-
-		buffer.erase(buffer.begin(), buffer.begin() + FILE_SIGNATURE.length());
-
-		string newName = filename.substr(8);
-		fs::path newPath = p.parent_path() / newName;
-
-		ofstream out(newPath, ios::binary);
-		if (!out.is_open()) { printError("Cannot save file!"); return; }
-		out.write(buffer.data(), buffer.size());
-		out.close();
-
-		try {
-			if (fs::exists(path)) fs::remove(path);
-			ofstream configOut(FileToSavePath);
-			if (configOut.is_open()) {
-				configOut << p.parent_path().string() << endl;
-				configOut << newPath.string() << endl;
-				configOut.close();
-			}
-		}
-		catch (...) {}
-
-		cout << "Success! File decrypted." << endl;
-		Countdown(3);
+		out.write(HeaderSignature.data(), HeaderSignature.length());
 	}
 	else
 	{
-		cout << "Mode: Encryption..." << endl;
-		buffer.insert(buffer.begin(), FILE_SIGNATURE.begin(), FILE_SIGNATURE.end());
+		char headData[7];
+		in.read(headData, 7);
 
-		for (size_t i = 0; i < buffer.size(); i++)
+		for (int i = 0; i < 7; i++)
 		{
-			buffer[i] = buffer[i] ^ key[i % key.length()];
+			headData[i] ^= key[i % key.length()];
 		}
+	
+		string CheckSig(headData, 6);
+		if (!(CheckSig == FILE_SIGNATURE))
+			return CipherResult::WrongPassword;
 
-		string newName = "Crypted_" + filename;
-		fs::path newPath = p.parent_path() / newName;
+		if (headData[6] == 'X')
+			method = CipherMethod::XOR;
+		else if (headData[6] == 'R')
+			method = CipherMethod::RC4;
+		else
+			return CipherResult::UndefinedMethod;
+	}
 
-		ofstream out(newPath, ios::binary);
-		if (!out.is_open()) { printError("Cannot save file!"); return; }
-		out.write(buffer.data(), buffer.size());
+	if (method == CipherMethod::XOR)
+	{
+		CipherResult res = XOR(key, in, out);
+
+		in.close();
 		out.close();
 
-		try {
-			if (fs::exists(path)) fs::remove(path);
-			ofstream configOut(FileToSavePath);
-			if (configOut.is_open()) {
-				configOut << p.parent_path().string() << endl;
-				configOut << newPath.string() << endl;
-				configOut.close();
-			}
+		if (res == CipherResult::Success)
+		{
+			if (DeleteInputFile)
+				if (fs::exists(inpath))
+					fs::remove(inpath);
 		}
-		catch (...) {}
-
-		cout << "Success! File encrypted." << endl;
-		Countdown(3);
+		else
+			return CipherResult::EncryptionError;
 	}
+	else if (method == CipherMethod::RC4)
+	{
+
+	}
+	else
+		return CipherResult::UndefinedMethod;
+
+	return CipherResult::Success;
 }

@@ -26,4 +26,4 @@ enum class CipherResult
 	EncryptionError
 };
 
-CipherResult ProcessFile(const string& key, CipherMode mode, const std::string& inpath, const std::string& outpath, bool DeleteInputFile = false, CipherMethod method = CipherMethod::Undefined);
+CipherResult ProcessFile(const std::string& key, CipherMode mode, const std::string& inpath, const std::string& outpath, bool DeleteInputFile = false, CipherMethod method = CipherMethod::Undefined);

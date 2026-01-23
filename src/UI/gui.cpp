@@ -6,6 +6,7 @@
 #include "UserInput.h"
 #include "View.h"
 #include "LinkExecutor.h"
+#include "FileActions_Console.h"
 
 #include <iostream>
 #include <string>
@@ -42,14 +43,7 @@ void menu()
 			case 3:
 			{
 				string currentPath = GetFilePath();
-				if (!currentPath.empty())
-				{
-					FileCipher(currentPath);
-				}
-				else
-				{
-					printError("File is not selected or does not exist!");
-				}
+				ActionCipherFile_Console(currentPath);
 				break;
 			}
 			case 4:

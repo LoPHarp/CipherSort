@@ -48,6 +48,9 @@
     <ClCompile Include="Features\LinkExecutor.cpp">
       <Filter>Features</Filter>
     </ClCompile>
+    <ClCompile Include="FileActions_Console.cpp">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Config.h">
@@ -76,6 +79,9 @@
     </ClInclude>
     <ClInclude Include="Features\LinkExecutor.h">
       <Filter>Features</Filter>
+    </ClInclude>
+    <ClInclude Include="FileActions_Console.h">
+      <Filter>Файлы заголовков</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

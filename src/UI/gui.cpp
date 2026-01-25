@@ -30,14 +30,7 @@ void menu()
 			case 2:
 			{
 				string currentPath = GetFilePath();
-				if (!currentPath.empty())
-				{
-					FileSort(currentPath);
-				}
-				else
-				{
-					printError("File is not selected or does not exist!");
-				}
+				ActionSortFile_Console(currentPath);
 				break;
 			}
 			case 3:

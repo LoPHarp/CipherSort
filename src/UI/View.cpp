@@ -52,19 +52,10 @@ void ViewSortedMenu()
 	ConsoleClear();
 	cout << "1 Sort by the first 5 characters" << endl;
 	cout << "2 Sort by first N chars" << endl;
-	cout << "3 Sort by user-specified characters" << endl;
-	cout << "4 Standard alphabetical sort" << endl;
-	cout << "5 Return(Exit)" << endl;
-}
-
-void ViewFinalSortedMenu(const string& fileName)
-{
-	ConsoleClear();
-
-	cout << "1 Save sorted file (as Sorted_" << fileName << ")" << endl;
-	cout << "2 Save and Open sorted file" << endl;
-	cout << "3 Print sorted file" << endl;
-	cout << "4 Return(Exit)" << endl;
+	cout << "3 Sort by Alphabetical" << endl;
+	cout << "4 Sort by Whole Line" << endl;
+	cout << "5 Sort by Prefix-Alphabetical" << endl;
+	cout << "6 Return(Exit)" << endl;
 }
 
 void ViewFileSystemElements(const vector<string>& items, const string& currentPath)
@@ -123,19 +114,6 @@ void PrintData(const vector<string>& data)
 	ConsoleClear();
 	for (const auto& line : data)
 		cout << line << endl;
-	cout << endl;
-	system("pause");
-}
-
-void PrintData(const vector<Group>& groups)
-{
-	ConsoleClear();
-	for (const auto& group : groups)
-	{
-		for (const auto& line : group.Lines)
-			cout << "  " << line << endl;
-		cout << endl;
-	}
 	cout << endl;
 	system("pause");
 }

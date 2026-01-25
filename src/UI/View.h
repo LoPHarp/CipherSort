@@ -18,4 +18,3 @@ void ViewSortedMenu();
 void ViewFinalSortedMenu(const std::string& fileName);
 
 void PrintData(const std::vector<std::string>& data);
-void PrintData(const std::vector<Group>& groups);

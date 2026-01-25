@@ -2,10 +2,37 @@
 #include <string>
 #include <vector>
 
-struct Group
-{
-	std::string Key = "";
-	std::vector<std::string> Lines;
+enum class DuplicateMode 
+{ 
+	KeepAll,
+	Deduplicate,
+	MoveToEnd 
 };
 
-void FileSort(const std::string& path);
+enum class SortMethod
+{
+	Prefix,
+	WholeLine,
+	Alphabetical,
+	PrefixAlphabetical
+};
+
+enum class SortResult
+{
+	Success = 0,
+	OpenError,
+	EmptyFile,
+	SaveError,
+	UndefinedMethod
+};
+
+struct SortConfig
+{
+	DuplicateMode dupMode;
+	SortMethod method;
+	int nChars = 5;
+	std::string searchKey = "";
+	bool includeGroupNames = false;
+};
+
+SortResult ProcessorSorting(const SortConfig& config, const std::string& inPath, const std::string& outPath);

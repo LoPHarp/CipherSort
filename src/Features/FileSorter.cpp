@@ -1,236 +1,183 @@
 #include "FileSorter.h"
-#include "FileSelector.h"
-#include "View.h"
-#include "Userinput.h"
 
-#include <filesystem>
+#include <fstream>
 #include <iostream>
 #include <string>
 #include <vector>
-#include <fstream>
 #include <algorithm>
 #include <map>
 
 using namespace std;
-namespace fs = filesystem;
 
-bool CompareGroups(const Group& a, const Group& b)
+struct Group
 {
-	return a.Key < b.Key;
+	string Key = "";
+	vector<string> Lines;
+};
+
+void AddToGroup(vector<Group>& groups, const string& key, const string& line)
+{
+	for (auto& group : groups)
+	{
+		if (group.Key == key)
+		{
+			group.Lines.push_back(line);
+			return;
+		}
+	}
+
+	Group newGroup;
+	newGroup.Key = key;
+	newGroup.Lines.push_back(line);
+	groups.push_back(newGroup);
 }
 
-void SaveData(const string& path, const vector<string>& data)
+vector<Group> SortByPrefix(const vector<string>& data, int n)
 {
-	ofstream out(path);
-	if (!out.is_open()) {
-		printError("Cannot save file!");
-		return;
+	vector<Group> result;
+	for (const string& line : data)
+	{
+		string key = (line.length() > n) ? line.substr(0, n) : line;
+		AddToGroup(result, key, line);
 	}
+	return result;
+}
+
+vector<Group> SortByWholeLine(const vector<string>& data)
+{
+	vector<Group> result;
+
 	for (const auto& line : data)
-		out << line << endl;
-	out.close();
-	cout << "File saved successfully to: " << path << endl;
-	Countdown(2);
+	{
+		string key = line;
+		AddToGroup(result, key, line);
+	}
+
+	return result;
 }
 
-void SaveData(const string& path, const vector<Group>& groups)
+bool CompareNoCase(const string& a, const string& b)
+{
+	for (size_t i = 0; i < a.length() && i < b.length(); ++i)
+	{
+		char charA = tolower(a[i]);
+		char charB = tolower(b[i]);
+
+		if (charA != charB)
+			return charA < charB;
+	}
+
+	return a.length() < b.length();
+}
+
+vector<Group> SortAlphabetically(const vector<string>& data)
+{
+	vector<Group> result;
+	Group singleGroup;
+	singleGroup.Key = "ALPHABEETICAL";
+	singleGroup.Lines = data;
+
+	sort(singleGroup.Lines.begin(), singleGroup.Lines.end(), CompareNoCase);
+
+	result.push_back(singleGroup);
+	return result;
+}
+
+vector<Group> SortHybrid(const vector<string>& data, int n)
+{
+	vector<Group> result = SortByPrefix(data, n);
+
+	for (auto& group : result)
+		sort(group.Lines.begin(), group.Lines.end(), CompareNoCase);
+
+	return result;
+}
+
+SortResult SaveResultToFile(const string& path, const vector<Group>& groups, bool showHeaders)
 {
 	ofstream out(path);
-	if (!out.is_open()) {
-		printError("Cannot save file!");
-		return;
-	}
+	if (!out.is_open())
+		return SortResult::SaveError;
+
 	for (const auto& group : groups)
 	{
-		if (group.Key == "DUPLICATES")
-			out << "\n=== DUPLICATES (Extracted copies) ===" << endl;
+		if (showHeaders && !group.Key.empty() && group.Key != "ALPHABETICAL")
+			out << "======= [\"" << group.Key << "\"] =======" << "\n";
 
 		for (const auto& line : group.Lines)
-			out << line << endl;
-
-		out << endl;
+			out << line << "\n";
 	}
+	out << "\n";
+
 	out.close();
-	cout << "File saved successfully to: " << path << endl;
-	Countdown(2);
+	return SortResult::Success;
 }
 
-void FileSort(const string& path)
+SortResult ProcessorSorting(const SortConfig& config, const string& inPath, const string& outPath)
 {
-	if (path.empty())
-	{
-		printError("Internal Error: FileSort received empty path!");
-		return;
-	}
-	ifstream in(path);
+	ifstream in(inPath);
 	if (!in.is_open())
-	{
-		printError("Cannot open file!");
-		return;
-	}
+		return SortResult::OpenError;
 
 	map<string, int> lineCounts;
-	string line;
-	vector<string> originalOrder;
 
-	while (getline(in, line))
+	string str;
+	while (getline(in, str))
 	{
-		if (!line.empty()) {
-			lineCounts[line]++;
-		}
+		if (!str.empty())
+			lineCounts[str]++;
 	}
 	in.close();
 
-	if (lineCounts.empty()) { printError("File is empty!"); return; }
+	if (lineCounts.empty())
+		return SortResult::EmptyFile;
 
-	vector<string> heavyDuplicates;
-	for (const auto& pair : lineCounts)
+	vector<string> dataPool;
+	vector<string> dupData;
+
+	for (map<string, int>::iterator it = lineCounts.begin(); it != lineCounts.end(); ++it)
 	{
-		if (pair.second >= 2) 
+		const string& text = it->first;
+		int count = it->second;
+
+		switch (config.dupMode)
 		{
-			heavyDuplicates.push_back(pair.first);
+		case DuplicateMode::KeepAll:
+		{
+			dataPool.insert(dataPool.end(), count, text);
+			break;
+		}
+		case DuplicateMode::Deduplicate:
+			dataPool.push_back(text);
+			break;
+		case DuplicateMode::MoveToEnd:
+		{
+			dataPool.push_back(text);
+			if (count > 1)
+				dupData.push_back(text);
+			break;
+		}
 		}
 	}
 
-	int dupMode = 0;
-	if (!heavyDuplicates.empty())
+	vector<Group> result;
+	switch (config.method)
 	{
-		ConsoleClear();
-		cout << "Found " << heavyDuplicates.size() << " lines that repeat 2 or more times." << endl;
-		cout << "1. Keep all (Do nothing)" << endl;
-		cout << "2. Deduplicate (Keep 1 copy in main list, delete others)" << endl;
-		cout << "3. Move to separate group at the END (1 copy only)" << endl;
-
-		int dChoice = InputDigitalValue();
-		if (dChoice == 2) dupMode = 1;
-		else if (dChoice == 3) dupMode = 2;
+	case SortMethod::Prefix:
+		result = SortByPrefix(dataPool, config.nChars);
+		break;
+	case SortMethod::Alphabetical:
+		result = SortAlphabetically(dataPool);
+		break;
+	case SortMethod::PrefixAlphabetical:
+		result = SortHybrid(dataPool, config.nChars);
+		break;
+	case SortMethod::WholeLine:
+		result = SortByWholeLine(dataPool);
+		break;
+	default:
+		return SortResult::UndefinedMethod;
 	}
 
-	vector<string> NotSortedData;
-	vector<string> EndGroupData;
-
-	for (const auto& pair : lineCounts)
-	{
-		string txt = pair.first;
-		int count = pair.second;
-
-		if (dupMode == 0) 
-		{
-			for (int i = 0; i < count; i++)
-				NotSortedData.push_back(txt);
-		}
-		else if (dupMode == 1) 
-		{
-			NotSortedData.push_back(txt);
-		}
-		else if (dupMode == 2) 
-		{
-			if (count >= 2)
-			{
-				NotSortedData.push_back(txt);
-				EndGroupData.push_back(txt);
-			}
-			else
-			{
-				NotSortedData.push_back(txt);
-			}
-		}
-	}
-
-	ViewSortedMenu();
-	int choice = InputDigitalValue();
-
-	vector<string> simpleResult;
-	vector<Group> groupResult;
-	bool isSimpleSort = (choice == 4);
-
-	if (isSimpleSort)
-	{
-		simpleResult = NotSortedData;
-		sort(simpleResult.begin(), simpleResult.end());
-
-		if (!EndGroupData.empty())
-		{
-			simpleResult.push_back(""); 
-			simpleResult.push_back("=== DUPLICATES ===");
-			for (const auto& d : EndGroupData) simpleResult.push_back(d);
-		}
-	}
-	else
-	{
-		int N = 5;
-		string UserKey;
-		if (choice == 2) { cout << "N"; N = InputDigitalValue(); }
-		else if (choice == 3) { cout << "Key"; UserKey = InputString(); }
-
-		for (const string& curentLine : NotSortedData)
-		{
-			string key;
-			if (choice == 1 || choice == 2)
-			{
-				if (curentLine.length() >= N) key = curentLine.substr(0, N);
-				else key = curentLine;
-			}
-			else if (choice == 3)
-			{
-				if (curentLine.find(UserKey) != 0) continue;
-				key = UserKey;
-			}
-
-			bool found = false;
-			for (auto& group : groupResult)
-			{
-				if (group.Key == key) {
-					group.Lines.push_back(curentLine);
-					found = true;
-					break;
-				}
-			}
-
-			if (!found) {
-				Group NewGroup;
-				NewGroup.Key = key;
-				NewGroup.Lines.push_back(curentLine);
-				groupResult.push_back(NewGroup);
-			}
-		}
-		sort(groupResult.begin(), groupResult.end(), CompareGroups);
-
-		if (!EndGroupData.empty())
-		{
-			Group dupGroup;
-			dupGroup.Key = "DUPLICATES";
-			dupGroup.Lines = EndGroupData;
-			groupResult.push_back(dupGroup);
-		}
-	}
-
-	fs::path p(path);
-	string fileName = p.filename().string();
-	fs::path newPath = p.parent_path() / ("Sorted_" + fileName);
-	string SavePath = newPath.string();
-
-	while (true)
-	{
-		ViewFinalSortedMenu(fileName);
-		int action = InputDigitalValue();
-
-		if (action == 1 || action == 2)
-		{
-			if (isSimpleSort) SaveData(SavePath, simpleResult);
-			else SaveData(SavePath, groupResult);
-
-			if (action == 2)
-			{
-				string command = "notepad \"" + SavePath + "\"";
-				system(command.c_str());
-			}
-		}
-		else if (action == 3)
-		{
-			if (isSimpleSort) PrintData(simpleResult);
-			else PrintData(groupResult);
-		}
-		else if (action == 4) break;
-	}
+	return SaveResultToFile(outPath, result, config.includeGroupNames);
 }

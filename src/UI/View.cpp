@@ -58,6 +58,24 @@ void ViewSortedMenu()
 	cout << "6 Return(Exit)" << endl;
 }
 
+void ViewDuplicateMenu()
+{
+	cout << "Duplicates Mode:" << endl;
+	cout << "1 Keep All" << endl;
+	cout << "2 Deduplicate" << endl;
+	cout << "3 Move to End" << endl;
+	cout << "4 Return(Exit)" << endl;
+}
+
+void ViewFinalSortedMenu()
+{
+	cout << "Select Action:" << endl;
+	cout << "1 Save to file" << endl;
+	cout << "2 Save and Open file" << endl;
+	cout << "3 Print to Console" << endl;
+	cout << "4 Return(Exit)" << endl;
+}
+
 void ViewFileSystemElements(const vector<string>& items, const string& currentPath)
 {
 	ConsoleClear();
@@ -116,4 +134,20 @@ void PrintData(const vector<string>& data)
 		cout << line << endl;
 	cout << endl;
 	system("pause");
+}
+
+void PrintData(const std::vector<Group>& groups, bool showHeaders)
+{
+	cout << "/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\" << "\n\n";
+	for (const auto& group : groups)
+	{
+		if (showHeaders && !group.Key.empty() && group.Key != "ALPHABETICAL")
+			cout << "======= [\"" << group.Key << "\"] =======" << "\n";
+
+		for (const auto& line : group.Lines)
+			cout << line << "\n";
+		cout << "\n";
+	}
+	cout << "/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\\" << "\n";
+	cout << "\n";
 }

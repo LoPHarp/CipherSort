@@ -1,0 +1,10 @@
+    void ActionCipherFile_Console(const string& path)
+        {
+    cout << "Enter Key: ";
+            cout << "Enter Key: ";
+    
+        return;
+    int choice = InputDigitalValue();
+        }
+#include "View.h"
+using namespace std;

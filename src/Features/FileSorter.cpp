@@ -9,11 +9,12 @@
 
 using namespace std;
 
-struct Group
+string Trim(const string& inpStr)
 {
-	string Key = "";
-	vector<string> Lines;
-};
+	size_t first = inpStr.find_first_not_of(" \t\r\n");
+	size_t last = inpStr.find_last_not_of(" \t\r\n");
+	return inpStr.substr(first, (last - first + 1));
+}
 
 void AddToGroup(vector<Group>& groups, const string& key, const string& line)
 {
@@ -32,12 +33,49 @@ void AddToGroup(vector<Group>& groups, const string& key, const string& line)
 	groups.push_back(newGroup);
 }
 
+bool CompareNoCase(const string& a, const string& b)
+{
+	for (size_t i = 0; i < a.length() && i < b.length(); ++i)
+	{
+		char charA = tolower(a[i]);
+		char charB = tolower(b[i]);
+
+		if (charA != charB)
+			return charA < charB;
+	}
+
+	return a.length() < b.length();
+}
+
+bool CompareAlphabeticalTrimmed(const string& a, const string& b)
+{
+	size_t i = a.find_first_not_of(" \t\r\n");
+	size_t j = b.find_first_not_of(" \t\r\n");
+
+	while (i < a.size() && j < b.size())
+	{
+		char charA = tolower(a[i]);
+		char charB = tolower(b[j]);
+
+		if (charA != charB)
+			return charA < charB;
+
+		i++;
+		j++;
+	}
+
+	return (a.length() - i) < (b.length() - j);
+}
+
 vector<Group> SortByPrefix(const vector<string>& data, int n)
 {
 	vector<Group> result;
 	for (const string& line : data)
 	{
-		string key = (line.length() > n) ? line.substr(0, n) : line;
+		size_t first = line.find_first_not_of(" \t\r\n");
+		string cleanStart = line.substr(first);
+
+		string key = (cleanStart.length() > n) ? cleanStart.substr(0, n) : cleanStart;
 		AddToGroup(result, key, line);
 	}
 	return result;
@@ -56,28 +94,14 @@ vector<Group> SortByWholeLine(const vector<string>& data)
 	return result;
 }
 
-bool CompareNoCase(const string& a, const string& b)
-{
-	for (size_t i = 0; i < a.length() && i < b.length(); ++i)
-	{
-		char charA = tolower(a[i]);
-		char charB = tolower(b[i]);
-
-		if (charA != charB)
-			return charA < charB;
-	}
-
-	return a.length() < b.length();
-}
-
 vector<Group> SortAlphabetically(const vector<string>& data)
 {
 	vector<Group> result;
 	Group singleGroup;
-	singleGroup.Key = "ALPHABEETICAL";
+	singleGroup.Key = "ALPHABETICAL";
 	singleGroup.Lines = data;
 
-	sort(singleGroup.Lines.begin(), singleGroup.Lines.end(), CompareNoCase);
+	sort(singleGroup.Lines.begin(), singleGroup.Lines.end(), CompareAlphabeticalTrimmed);
 
 	result.push_back(singleGroup);
 	return result;
@@ -88,7 +112,7 @@ vector<Group> SortHybrid(const vector<string>& data, int n)
 	vector<Group> result = SortByPrefix(data, n);
 
 	for (auto& group : result)
-		sort(group.Lines.begin(), group.Lines.end(), CompareNoCase);
+		sort(group.Lines.begin(), group.Lines.end(), CompareAlphabeticalTrimmed);
 
 	return result;
 }
@@ -113,19 +137,25 @@ SortResult SaveResultToFile(const string& path, const vector<Group>& groups, boo
 	return SortResult::Success;
 }
 
-SortResult ProcessorSorting(const SortConfig& config, const string& inPath, const string& outPath)
+SortResult ProcessorSorting(const SortConfig& config, const string& inPath, vector<Group>& outRes)
 {
 	ifstream in(inPath);
 	if (!in.is_open())
 		return SortResult::OpenError;
+
+	outRes.clear();
 
 	map<string, int> lineCounts;
 
 	string str;
 	while (getline(in, str))
 	{
-		if (!str.empty())
+		if (!str.empty() && str.find_first_not_of(" \t\r\n") != string::npos)
+		{
+			if (config.keepRowFormatting == false)
+				str = Trim(str);
 			lineCounts[str]++;
+		}
 	}
 	in.close();
 
@@ -179,5 +209,12 @@ SortResult ProcessorSorting(const SortConfig& config, const string& inPath, cons
 		return SortResult::UndefinedMethod;
 	}
 
-	return SaveResultToFile(outPath, result, config.includeGroupNames);
+	sort(result.begin(), result.end(), [](const Group& a, const Group& b)
+	{
+		return CompareNoCase(a.Key, b.Key);
+	});
+
+	outRes = move(result);
+
+	return SortResult::Success;
 }

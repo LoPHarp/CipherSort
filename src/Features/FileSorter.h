@@ -33,6 +33,14 @@ struct SortConfig
 	int nChars = 5;
 	std::string searchKey = "";
 	bool includeGroupNames = false;
+	bool keepRowFormatting = false;
 };
 
-SortResult ProcessorSorting(const SortConfig& config, const std::string& inPath, const std::string& outPath);
+struct Group
+{
+	std::string Key = "";
+	std::vector<std::string> Lines;
+};
+
+SortResult SaveResultToFile(const std::string& path, const std::vector<Group>& groups, bool showHeaders);
+SortResult ProcessorSorting(const SortConfig& config, const std::string& inPath, std::vector<Group>& result);

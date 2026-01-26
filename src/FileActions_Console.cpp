@@ -6,6 +6,7 @@
 
 #include <iostream>
 #include <filesystem>
+#include <chrono>
 
 using namespace std;
 namespace fs = std::filesystem;
@@ -88,17 +89,9 @@ void ActionSortFile_Console(const string& path)
 
 	SortConfig config;
 
-	int choice = 0;
-	while (true)
-	{
-		ConsoleClear();
-		ViewSortedMenu();
-		choice = InputDigitalValue();
-		if (choice == 6)
-			return;
-		if (choice > 0 && choice < 6)
-			break;
-	}
+	ConsoleClear();
+	ViewSortedMenu();
+	int	choice = InputDigitalValue();
 
 	ConsoleClear();
 	switch (choice)
@@ -114,8 +107,6 @@ void ActionSortFile_Console(const string& path)
 		break;
 	case 3:
 		config.method = SortMethod::Alphabetical;
-		cout << "Enter number of characters for grouping: ";
-		config.nChars = InputDigitalValue();
 		break;
 	case 4:
 		config.method = SortMethod::WholeLine;
@@ -130,7 +121,7 @@ void ActionSortFile_Console(const string& path)
 	}
 
 	ConsoleClear();
-	cout << "Duplicates Mode:\n1 Keep All\n2 Deduplicate\n3 Move to End\n4 Return" << endl;
+	ViewDuplicateMenu();
 	int dupChoice = InputDigitalValue();
 	switch (dupChoice)
 	{
@@ -141,19 +132,68 @@ void ActionSortFile_Console(const string& path)
 	}
 
 	ConsoleClear();
-	cout << "Include group headers in file?\n1 Yes\n2 No ";
+	cout << "Include group headers in file?\n1 Yes\n2 No\n";
 	config.includeGroupNames = (InputDigitalValue() == 1);
 
-	fs::path p(path);
-	string outPath = (p.parent_path() / ("Sorted_" + p.filename().string())).string();
+	vector<Group> sortRes;
+	
+	auto start = chrono::steady_clock::now();
+	SortResult res = ProcessorSorting(config, path, sortRes);
+	auto end = chrono::steady_clock::now();
+	auto diff = chrono::duration_cast<chrono::milliseconds>(end - start);
 
-	ConsoleClear();
-	cout << "Sorting in progress..." << endl;
-	SortResult res = ProcessorSorting(config, path, outPath);
-
+	choice = 0;
 	if (res == SortResult::Success)
 	{
-		cout << "Success! Sorted file saved " << outPath << endl;
+		ConsoleClear();
+		cout << "Sorted in: " << diff.count() << " ms" << endl;
+		Countdown();
+		ConsoleClear();
+
+		while (true)
+		{
+			ViewFinalSortedMenu();
+			choice = InputDigitalValue();
+			ConsoleClear();
+
+			fs::path p(path);
+			string outPath = (p.parent_path() / ("Sorted_" + p.filename().string())).string();
+			SortResult SaveResult = SortResult::Success;
+			switch (choice)
+			{
+			case 1:
+			{
+				SaveResult = SaveResultToFile(outPath, sortRes, config.includeGroupNames);
+				break;
+			}
+			case 2:
+			{
+				SaveResult = SaveResultToFile(outPath, sortRes, config.includeGroupNames);
+				if (SaveResult == SortResult::Success)
+				{
+					string command = "notepad \"" + outPath + "\"";
+					system(command.c_str());
+				}
+				break;
+			}
+			case 3:
+			{
+				PrintData(sortRes, config.includeGroupNames);
+				break;
+			}
+			case 4:
+				return;
+			default:
+				continue;
+			}
+			if (SaveResult == SortResult::Success && choice != 3)
+			{
+				cout << "File saved to " << outPath << endl;
+				Countdown();
+			}
+			else if(SaveResult != SortResult::Success)
+				printError("Save sorted file failed!");
+		}	
 	}
 	else
 	{

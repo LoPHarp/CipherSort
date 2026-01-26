@@ -48,15 +48,18 @@ Integrated utilities for efficient file system interaction:
 To build CipherSort CLI, ensure you have a C++17 compliant compiler and CMake installed.
 
 1. Clone the repository:
+```bash
    git clone https://github.com/LoPHarp/CipherSort.git
-
-2. Navigate to the src directory and create a build folder:
+```
+3. Navigate to the src directory and create a build folder:
+```bash
    mkdir build && cd build
-
-3. Configure and build the project:
+```
+5. Configure and build the project:
+```bash
    cmake ..
    cmake --build .
-
+```
 ---
 
 ## Usage Guide

@@ -1,7 +1,4 @@
 #include "FileCipher.h"
-#include "FileSelector.h"
-#include "UserInput.h"
-#include "View.h"
 #include "Config.h"
 
 #include <iostream>

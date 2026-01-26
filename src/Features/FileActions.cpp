@@ -1,6 +1,4 @@
 #include "FileActions.h"
-#include "View.h" 
-#include "UserInput.h" 
 
 #include <iostream>
 #include <fstream>
@@ -12,6 +10,7 @@
 using namespace std;
 namespace fs = std::filesystem;
 
+/*
 string ResolvePath(const string& originalPath)
 {
     fs::path p(originalPath);
@@ -75,7 +74,7 @@ void ActionViewContent(const string& path)
     cout << "Viewing: " << filename << endl;
     PrintData(content);
 }
-
+*/
 void ActionOpenFolder(const string& path)
 {
     string params = "/select,\"" + path + "\"";

@@ -1,3 +1,4 @@
+/*
 #include "LinkExecutor.h"
 #include "View.h"
 #include "UserInput.h" 
@@ -92,3 +93,4 @@ void ActionOpenLinks(const string& path)
 		Countdown(3);
 	}
 }
+*/

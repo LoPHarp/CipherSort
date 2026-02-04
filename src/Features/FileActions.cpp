@@ -61,7 +61,7 @@ void ActionViewContent(const string& path)
     while (getline(in, line))
     {
         content.push_back(line);
-    }
+        }
     in.close();
 
     if (content.empty())

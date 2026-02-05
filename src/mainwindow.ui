@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1427</width>
-    <height>748</height>
+    <width>1403</width>
+    <height>891</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -156,15 +156,19 @@
      </layout>
     </item>
     <item>
-     <widget class="QTextEdit" name="textEdit">
+     <widget class="QTableWidget" name="twLog">
       <property name="maximumSize">
        <size>
         <width>16777215</width>
         <height>80</height>
        </size>
       </property>
-      <property name="readOnly">
-       <bool>true</bool>
+     </widget>
+    </item>
+    <item>
+     <widget class="QCheckBox" name="chkShowLog">
+      <property name="text">
+       <string>Показать лог</string>
       </property>
      </widget>
     </item>
@@ -175,12 +179,11 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1427</width>
+     <width>1403</width>
      <height>21</height>
     </rect>
    </property>
   </widget>
-  <widget class="QStatusBar" name="statusbar"/>
  </widget>
  <resources/>
  <connections/>

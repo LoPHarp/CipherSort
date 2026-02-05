@@ -26,6 +26,19 @@ MainWindow::MainWindow(QWidget *parent)
 
 MainWindow::~MainWindow()
 {
+    QString currentPath = ui->lePath->text();
+
+    if(!currentPath.isEmpty())
+    {
+        QFile file(FileToSavePath);
+        if(file.open(QIODevice::WriteOnly | QIODevice::Text))
+        {
+            QTextStream out(&file);
+            out << currentPath;
+            file.close();
+        }
+    }
+
     delete ui;
 }
 

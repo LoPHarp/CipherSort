@@ -6,12 +6,20 @@
 #include <QFile>
 #include <QTextStream>
 #include <QDir>
+#include <QTableWidget>
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
 class MainWindow;
 }
 QT_END_NAMESPACE
+
+enum class LogType {
+    Info,
+    Success,
+    Warning,
+    Error
+};
 
 class MainWindow : public QMainWindow
 {
@@ -36,7 +44,11 @@ private:
     Ui::MainWindow *ui;
     QFileSystemModel *model;
 
+    int logCounter = 1;
+
     void setupStartTreeVisuals();
+    void setupLogVisuals();
+
     void syncTreeToPath(QString path);
     void syncLineToPath(QString path);
     void loadLastSession();

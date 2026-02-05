@@ -22,14 +22,23 @@ public:
     ~MainWindow();
 
 private slots:
-    void on_treeView_clicked(const QModelIndex &index);
+    void on_treeView_doubleClicked(const QModelIndex &index);
+
+    void on_lePath_returnPressed();
+
+    void on_btnOpenFolder_clicked();
+
+    void on_btnOpenFile_clicked();
+
+    void on_btnBrowse_clicked();
 
 private:
     Ui::MainWindow *ui;
     QFileSystemModel *model;
 
-    void configureTreeVisuals();
-    void tryOpenPath(QString path);
-    void tryloadLastSession();
+    void setupStartTreeVisuals();
+    void syncTreeToPath(QString path);
+    void syncLineToPath(QString path);
+    void loadLastSession();
 };
 #endif // MAINWINDOW_H

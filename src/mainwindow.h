@@ -40,17 +40,24 @@ private slots:
 
     void on_btnBrowse_clicked();
 
+    void on_EnDecButton_clicked();
+
 private:
     Ui::MainWindow *ui;
     QFileSystemModel *model;
 
-    int logCounter = 1;
+    QString currentFilePath;
+    QString tempWorkPath;
+    QString tempBackupPath;
 
-    void setupStartTreeVisuals();
-    void setupLogVisuals();
+    void setupStartSettings();
 
     void syncTreeToPath(QString path);
     void syncLineToPath(QString path);
+    void setingsWhenSetFile(const QString &filePath);
     void loadLastSession();
+
+    void addLog(int type, const QString &message);
+    void loadFileToEditor(const QString &filePath);
 };
 #endif // MAINWINDOW_H

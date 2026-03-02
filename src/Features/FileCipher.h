@@ -1,6 +1,5 @@
 #pragma once
 #include <string>
-#include <iostream>
 
 enum class CipherMode
 {

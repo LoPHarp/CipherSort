@@ -372,6 +372,7 @@ Sorted_*.txt
 src/Sorted_*.txt
 Crypted_*.txt
 src/Crypted_*.txt
+test*.txt
 
 # ==========================
 # Qt Creator & CMake (Additions)
@@ -398,3 +399,4 @@ Makefile
 ui_*.h
 moc_*.cpp
 *.qrc.cpp
+

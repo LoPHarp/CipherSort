@@ -1,7 +1,6 @@
 #include "FileSorter.h"
 
 #include <fstream>
-#include <iostream>
 #include <string>
 #include <vector>
 #include <algorithm>
@@ -119,22 +118,31 @@ vector<Group> SortHybrid(const vector<string>& data, int n)
 
 SortResult SaveResultToFile(const string& path, const vector<Group>& groups, bool showHeaders)
 {
-	ofstream out(path);
-	if (!out.is_open())
-		return SortResult::SaveError;
+    ofstream out(path);
+    if (!out.is_open())
+        return SortResult::SaveError;
 
-	for (const auto& group : groups)
-	{
-		if (showHeaders && !group.Key.empty() && group.Key != "ALPHABETICAL")
-			out << "======= [\"" << group.Key << "\"] =======" << "\n";
+    for (size_t i = 0; i < groups.size(); ++i)
+    {
+        const auto& group = groups[i];
 
-		for (const auto& line : group.Lines)
-			out << line << "\n";
-	}
-	out << "\n";
+        if (showHeaders)
+        {
+            if (group.Key == "DUPLICATES")
+                out << "======= [ ДУБЛИКАТЫ ] =======" << "\n";
+            else if (!group.Key.empty() && group.Key != "ALPHABETICAL")
+                out << "======= [\"" << group.Key << "\"] =======" << "\n";
+        }
 
-	out.close();
-	return SortResult::Success;
+        for (const auto& line : group.Lines)
+            out << line << "\n";
+
+        if (showHeaders && i < groups.size() - 1)
+            out << "\n";
+    }
+
+    out.close();
+    return SortResult::Success;
 }
 
 SortResult ProcessorSorting(const SortConfig& config, const string& inPath, vector<Group>& outRes)
@@ -165,56 +173,60 @@ SortResult ProcessorSorting(const SortConfig& config, const string& inPath, vect
 	vector<string> dataPool;
 	vector<string> dupData;
 
-	for (map<string, int>::iterator it = lineCounts.begin(); it != lineCounts.end(); ++it)
-	{
-		const string& text = it->first;
-		int count = it->second;
+    for (map<string, int>::iterator it = lineCounts.begin(); it != lineCounts.end(); ++it)
+    {
+        const string& text = it->first;
+        int count = it->second;
 
-		switch (config.dupMode)
-		{
-		case DuplicateMode::KeepAll:
-		{
-			dataPool.insert(dataPool.end(), count, text);
-			break;
-		}
-		case DuplicateMode::Deduplicate:
-			dataPool.push_back(text);
-			break;
-		case DuplicateMode::MoveToEnd:
-		{
-			dataPool.push_back(text);
-			if (count > 1)
-				dupData.push_back(text);
-			break;
-		}
-		}
-	}
+        switch (config.dupMode)
+        {
+        case DuplicateMode::KeepAll:
+            dataPool.insert(dataPool.end(), count, text);
+            break;
+        case DuplicateMode::Deduplicate:
+            dataPool.push_back(text);
+            break;
+        case DuplicateMode::MoveToEnd:
+            dataPool.push_back(text);
+            if (count > 1)
+                dupData.insert(dupData.end(), count - 1, text);
+            break;
+        }
+    }
 
-	vector<Group> result;
-	switch (config.method)
-	{
-	case SortMethod::Prefix:
-		result = SortByPrefix(dataPool, config.nChars);
-		break;
-	case SortMethod::Alphabetical:
-		result = SortAlphabetically(dataPool);
-		break;
-	case SortMethod::PrefixAlphabetical:
-		result = SortHybrid(dataPool, config.nChars);
-		break;
-	case SortMethod::WholeLine:
-		result = SortByWholeLine(dataPool);
-		break;
-	default:
-		return SortResult::UndefinedMethod;
-	}
+    vector<Group> result;
+    switch (config.method)
+    {
+    case SortMethod::Prefix:
+        result = SortByPrefix(dataPool, config.nChars);
+        break;
+    case SortMethod::Alphabetical:
+        result = SortAlphabetically(dataPool);
+        break;
+    case SortMethod::PrefixAlphabetical:
+        result = SortHybrid(dataPool, config.nChars);
+        break;
+    case SortMethod::WholeLine:
+        result = SortByWholeLine(dataPool);
+        break;
+    default:
+        return SortResult::UndefinedMethod;
+    }
 
-	sort(result.begin(), result.end(), [](const Group& a, const Group& b)
-	{
-		return CompareNoCase(a.Key, b.Key);
-	});
+    sort(result.begin(), result.end(), [](const Group& a, const Group& b)
+         {
+             return CompareNoCase(a.Key, b.Key);
+         });
 
-	outRes = move(result);
+    if (!dupData.empty())
+    {
+        Group dupGroup;
+        dupGroup.Key = "DUPLICATES";
+        dupGroup.Lines = dupData;
+        result.push_back(dupGroup);
+    }
+
+    outRes = std::move(result);
 
 	return SortResult::Success;
 }

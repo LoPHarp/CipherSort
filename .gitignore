@@ -372,3 +372,31 @@ Sorted_*.txt
 src/Sorted_*.txt
 Crypted_*.txt
 src/Crypted_*.txt
+test*.txt
+
+# ==========================
+# Qt Creator & CMake (Additions)
+# ==========================
+
+build/
+src/build/
+
+# Любые папки сборки, которые создает Qt Creator (они часто начинаются с build-)
+build-*/
+
+# Файл настроек пользователя Qt Creator (он уникален для каждого ПК)
+CMakeLists.txt.user
+
+# Временные файлы CMake
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+.cmake/
+
+# Автоматически сгенерированные файлы Qt (обычно лежат в build, но на всякий случай)
+*_autogen/
+ui_*.h
+moc_*.cpp
+*.qrc.cpp
+

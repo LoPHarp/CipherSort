@@ -1,4 +1,4 @@
 #pragma once
-#include <string>
+#include <QString>
 
-inline const std::string FileToSavePath = "SavedPath.txt";
+inline const QString FileToSavePath = "SavedPath.txt";

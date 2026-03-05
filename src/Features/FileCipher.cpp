@@ -1,14 +1,9 @@
 #include "FileCipher.h"
-#include "FileSelector.h"
-#include "UserInput.h"
-#include "View.h"
-#include "Config.h"
 
 #include <iostream>
 #include <fstream>
 #include <vector>
 #include <string>
-#include <filesystem>
 
 using namespace std;
 namespace fs = std::filesystem;
@@ -77,75 +72,77 @@ CipherResult RC4(const string& key, ifstream& in, ofstream& out)
 	return CipherResult::Success;
 }
 
-CipherResult ProcessFile(const string& key, CipherMode mode, const string& inpath, const string& outpath, bool DeleteInputFile, CipherMethod method)
+CipherResult ProcessFile(const string& key, const string& inpath, const string& outpath, CipherMethod method)
 {
-	ifstream in(inpath, ios::binary);
-	if (!in.is_open())
-		return CipherResult::FileNotFound;
+    ifstream in(inpath, ios::binary);
+    if (!in.is_open())
+        return CipherResult::FileNotFound;
 
-	in.seekg(0, ios::end);
-	if (in.tellg() == 0)
-		return CipherResult::EmptyFile;
-	in.seekg(0, ios::beg);
+    in.seekg(0, ios::end);
+    if (in.tellg() == 0)
+        return CipherResult::EmptyFile;
+    in.seekg(0, ios::beg);
 
-	ofstream out(outpath, ios::binary);
-	if (!out.is_open())
-		return CipherResult::SaveError;
+    char headData[7];
+    bool isEncrypted = false;
 
-	if (mode == CipherMode::Encrypt)
-	{
-		string HeaderSignature = FILE_SIGNATURE + (method == CipherMethod::XOR ? 'X' : 'R');
+    if (in.read(headData, 7))
+    {
+        for (int i = 0; i < 7; i++)
+            headData[i] ^= key[i % key.length()];
 
-		for (size_t i = 0; i < HeaderSignature.size(); i++)
-			HeaderSignature[i] ^= key[i % key.length()];
+        string CheckSig(headData, 6);
+        if (CheckSig == FILE_SIGNATURE)
+        {
+            isEncrypted = true;
 
-		out.write(HeaderSignature.data(), HeaderSignature.length());
-	}
-	else
-	{
-		char headData[7];
-		in.read(headData, 7);
+            if (headData[6] == 'X')
+                method = CipherMethod::XOR;
+            else if (headData[6] == 'R')
+                method = CipherMethod::RC4;
+            else
+                return CipherResult::UndefinedMethod;
+        }
+        else
+        {
+            in.clear();
+            in.seekg(0, ios::beg);
+        }
+    }
+    else
+    {
+        in.clear();
+        in.seekg(0, ios::beg);
+    }
 
-		for (int i = 0; i < 7; i++)
-		{
-			headData[i] ^= key[i % key.length()];
-		}
-	
-		string CheckSig(headData, 6);
-		if (!(CheckSig == FILE_SIGNATURE))
-			return CipherResult::WrongPassword;
+    ofstream out(outpath, ios::binary);
+    if (!out.is_open())
+        return CipherResult::SaveError;
 
-		if (headData[6] == 'X')
-			method = CipherMethod::XOR;
-		else if (headData[6] == 'R')
-			method = CipherMethod::RC4;
-		else
-			return CipherResult::UndefinedMethod;
-	}
+    if (!isEncrypted)
+    {
+        string HeaderSignature = FILE_SIGNATURE + (method == CipherMethod::XOR ? 'X' : 'R');
 
-	CipherResult res;
+        for (size_t i = 0; i < HeaderSignature.size(); i++)
+            HeaderSignature[i] ^= key[i % key.length()];
 
-	if (method == CipherMethod::XOR)
-	{
-		res = XOR(key, in, out);
-	}
-	else if (method == CipherMethod::RC4)
-	{
-		res = RC4(key, in, out);
-	}
-	else
-		return CipherResult::UndefinedMethod;
+        out.write(HeaderSignature.data(), HeaderSignature.length());
+    }
 
-	in.close();
-	out.close();
-	if (res == CipherResult::Success)
-	{
-		if (DeleteInputFile)
-			if (fs::exists(inpath))
-				fs::remove(inpath);
-	}
-	else
-		return CipherResult::EncryptionError;
+    CipherResult res;
 
-	return CipherResult::Success;
+    if (method == CipherMethod::XOR)
+        res = XOR(key, in, out);
+    else if (method == CipherMethod::RC4)
+        res = RC4(key, in, out);
+    else
+        return CipherResult::UndefinedMethod;
+
+    in.close();
+    out.close();
+
+    if (res != CipherResult::Success)
+        return CipherResult::EncryptionError;
+
+    return CipherResult::Success;
 }

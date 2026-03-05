@@ -28,8 +28,6 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
 
-    ui->progressBar->setVisible(false);
-
     setupStartSettings();
     loadLastSession();
 

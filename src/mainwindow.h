@@ -42,6 +42,20 @@ private slots:
 
     void on_EnDecButton_clicked();
 
+    void on_Save_clicked();
+
+    void on_SaveAs_clicked();
+
+    void on_pushCancel_clicked();
+
+    void on_pushCancelCipher_clicked();
+
+    void on_sort_clicked();
+
+    void on_pushCancelSort_clicked();
+
+    void on_pushHttpOpem_clicked();
+
 private:
     Ui::MainWindow *ui;
     QFileSystemModel *model;
@@ -49,15 +63,22 @@ private:
     QString currentFilePath;
     QString tempWorkPath;
     QString tempBackupPath;
+    QString tempCryptoPath;
+    QString tempSortPath;
+    bool isLoadingFile = false;
+    bool EnDecTempFileNowActive = false;
+    bool SortTempFileNowActive = false;
 
     void setupStartSettings();
 
+    void loadLastSession();
+
     void syncTreeToPath(QString path);
     void syncLineToPath(QString path);
-    void setingsWhenSetFile(const QString &filePath);
-    void loadLastSession();
 
     void addLog(int type, const QString &message);
     void loadFileToEditor(const QString &filePath);
+    void onTableItemChanged(QTableWidgetItem *item);
+    void saveTableToTempWorkFile();
 };
 #endif // MAINWINDOW_H

@@ -24,7 +24,7 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         MANUAL_FINALIZATION
         ${PROJECT_SOURCES}
         Config.h
-        Features/FileActions.cpp Features/FileActions.h Features/FileCipher.cpp Features/FileCipher.h Features/FileSelector.cpp Features/FileSelector.h Features/FileSorter.cpp Features/FileSorter.h Features/LinkExecutor.cpp Features/LinkExecutor.h
+        Features/FileCipher.cpp Features/FileCipher.h   Features/FileSorter.cpp Features/FileSorter.h
         Features/FileCipher.cpp Features/FileCipher.h
     )
 target_include_directories(CipherSortQt PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})

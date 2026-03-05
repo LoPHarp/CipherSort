@@ -1,6 +1,8 @@
 #include "mainwindow.h"
 #include "./ui_mainwindow.h"
 #include "Config.h"
+#include "Features/FileCipher.h"
+#include "Features/FileSorter.h"
 
 #include <QDesktopServices>
 #include <QUrl>
@@ -13,6 +15,12 @@
 #include <QDateTime>
 #include <QTableWidgetItem>
 #include <QStyle>
+#include <QProcess>
+#include <QTimer>
+#include <QEventLoop>
+#include <QFileInfo>
+
+using namespace std;
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -25,7 +33,6 @@ MainWindow::MainWindow(QWidget *parent)
     setupStartSettings();
     loadLastSession();
 
-    ui->pushCancel->hide();
     connect(ui->comboBoxMethod, QOverload<int>::of(&QComboBox::currentIndexChanged), [this](int index)
     {
         if(index == 0 || index == 3)
@@ -58,6 +65,7 @@ MainWindow::MainWindow(QWidget *parent)
             ui->twLog->hide();
     });
 
+    connect(ui->tableWidget, &QTableWidget::itemChanged, this, &MainWindow::onTableItemChanged);
 }
 
 MainWindow::~MainWindow()
@@ -107,6 +115,11 @@ void MainWindow::setupStartSettings()
 
     tempWorkPath = QDir::tempPath() + "/ciphersort_work.tmp";
     tempBackupPath = QDir::tempPath() + "/ciphersort_backup.tmp";
+    tempCryptoPath = QDir::tempPath() + "/ciphersort_crypto.tmp";
+    tempSortPath = QDir::tempPath() + "/ciphersort_sort.tmp";
+
+    ui->pushCancelCipher->setEnabled(false);
+    ui->pushCancelSort->setEnabled(false);
     ui->pushCancel->setEnabled(false);
 
     ui->tableWidget->horizontalHeader()->hide();
@@ -119,6 +132,10 @@ void MainWindow::setupStartSettings()
         );
     QFont editorFont("Consolas", 10);
     ui->tableWidget->setFont(editorFont);
+
+    ui->label->setText("");
+    ui->label->setVisible(false);
+
 }
 
 
@@ -206,6 +223,8 @@ void MainWindow::addLog(int type, const QString &message)
 
 void MainWindow::loadFileToEditor(const QString &filePath)
 {
+    isLoadingFile = true;
+
     ui->tableWidget->setRowCount(0);
 
     QFile file(filePath);
@@ -215,7 +234,7 @@ void MainWindow::loadFileToEditor(const QString &filePath)
         return;
     }
 
-    if (filePath != tempWorkPath)
+   if (filePath != tempWorkPath && filePath != tempCryptoPath && filePath != tempSortPath)
     {
         currentFilePath = filePath;
 
@@ -228,8 +247,6 @@ void MainWindow::loadFileToEditor(const QString &filePath)
         QFile::copy(currentFilePath, tempBackupPath);
 
         ui->pushCancel->setEnabled(false);
-        ui->label->setText("Предварительный просмотр файла");
-        ui->label->setStyleSheet("");
     }
 
     QTextStream in(&file);
@@ -251,6 +268,49 @@ void MainWindow::loadFileToEditor(const QString &filePath)
     }
 
     ui->tableWidget->setUpdatesEnabled(true);
+
+    isLoadingFile = false;
+}
+
+
+void MainWindow::saveTableToTempWorkFile()
+{
+    QString targetPath = tempWorkPath;
+    if (EnDecTempFileNowActive)
+        targetPath = tempCryptoPath;
+    else if (SortTempFileNowActive)
+        targetPath = tempSortPath;
+
+    QFile file(targetPath);
+
+    if (!file.open(QIODevice::WriteOnly | QIODevice::Text))
+        return;
+
+    QTextStream out(&file);
+    out.setEncoding(QStringConverter::Utf8);
+
+    for (int i = 0; i < ui->tableWidget->rowCount(); ++i)
+    {
+        QTableWidgetItem *item = ui->tableWidget->item(i, 0);
+
+        if (item)
+            out << item->text() << "\n";
+        else
+            out << "\n";
+    }
+}
+
+
+void MainWindow::onTableItemChanged(QTableWidgetItem *item)
+{
+    if (isLoadingFile)
+        return;
+
+    saveTableToTempWorkFile();
+
+    ui->pushCancel->setEnabled(true);
+    ui->label->setText("Файл изменен (не сохранено)");
+    ui->label->setVisible(true);
 }
 
 
@@ -325,9 +385,6 @@ void MainWindow::on_btnOpenFile_clicked()
 }
 
 
-
-
-
 void MainWindow::on_EnDecButton_clicked()
 {
     QString pass = ui->inPassword->text();
@@ -337,6 +394,316 @@ void MainWindow::on_EnDecButton_clicked()
         return;
     }
 
+    string key = pass.toStdString();
+    string inPath = tempWorkPath.toStdString();
+    string outPath = tempCryptoPath.toStdString();
+    CipherMethod Method;
+    if(ui->radioButtonRC4->isChecked())
+        Method = CipherMethod::RC4;
+    else if(ui->radioButtonXOR->isChecked())
+        Method = CipherMethod::XOR;
+    else
+        Method = CipherMethod::Undefined;
 
+    CipherResult result = ProcessFile(key, inPath, outPath, Method);
+
+    switch (result)
+    {
+    case CipherResult::Success:
+    {
+        addLog(1, "Файл успешно зашифрован/дешифрован");
+        loadFileToEditor(tempCryptoPath);
+        ui->label->setText("Предпросмотр файла (Изменения не сохранены)");
+        ui->label->setVisible(true);
+        ui->pushCancelCipher->setEnabled(true);
+        EnDecTempFileNowActive = true;
+        break;
+    }
+    case CipherResult::FileNotFound:
+        addLog(3, "Файл не найден");
+        break;
+    case CipherResult::WrongPassword:
+        addLog(3, "Неправильный пароль");
+        break;
+    case CipherResult::SaveError:
+        addLog(3, "Ошибка при сохранении");
+        break;
+    case CipherResult::UndefinedMethod:
+        addLog(3, "Не известный метод шифрования");
+        break;
+    case CipherResult::EncryptionError:
+        addLog(3, "Ошибка при шифровании/дешифровании");
+        break;
+    case CipherResult::EmptyFile:
+        addLog(3, "Файл пустой");
+        break;
+    }
+}
+
+
+void MainWindow::on_Save_clicked()
+{
+    if (currentFilePath.isEmpty())
+    {
+        addLog(2, "Ошибка, файл не выбран!");
+        return;
+    }
+
+    QString sourcePath = tempWorkPath;
+    if (EnDecTempFileNowActive)
+        sourcePath = tempCryptoPath;
+    else if (SortTempFileNowActive)
+        sourcePath = tempSortPath;
+
+    if (!QFile::exists(sourcePath))
+    {
+        addLog(2, "Нету изменений для сохранения");
+        return;
+    }
+
+    if (QFile::exists(currentFilePath))
+        QFile::remove(currentFilePath);
+
+    if (QFile::copy(sourcePath, currentFilePath))
+    {
+        if (EnDecTempFileNowActive)
+        {
+            if (QFile::exists(tempWorkPath))
+                QFile::remove(tempWorkPath);
+            QFile::copy(tempCryptoPath, tempWorkPath);
+
+            EnDecTempFileNowActive = false;
+            ui->pushCancelCipher->setEnabled(false);
+        }
+        else if (SortTempFileNowActive)
+        {
+            if (QFile::exists(tempWorkPath))
+                QFile::remove(tempWorkPath);
+            QFile::copy(tempSortPath, tempWorkPath);
+
+            SortTempFileNowActive = false;
+            ui->pushCancelSort->setEnabled(false);
+        }
+
+        addLog(1, "Изменения успешно сохранены");
+        ui->label->setText("");
+        ui->label->setVisible(false);
+
+        loadFileToEditor(currentFilePath);
+    }
+}
+
+
+void MainWindow::on_SaveAs_clicked()
+{
+    QString sourcePath = tempWorkPath;
+    if (EnDecTempFileNowActive)
+        sourcePath = tempCryptoPath;
+    else if (SortTempFileNowActive)
+        sourcePath = tempSortPath;
+
+    if (!QFile::exists(sourcePath))
+    {
+        addLog(2, "Нету изменений для сохранения");
+        return;
+    }
+
+    QString newPath = QFileDialog::getSaveFileName(this, "Сохранить файл как...", currentFilePath, "All Files (*.*)");
+
+    if (newPath.isEmpty())
+        return;
+
+    if (QFile::exists(newPath))
+        QFile::remove(newPath);
+
+    if (QFile::copy(sourcePath, newPath))
+    {
+        addLog(1, "Файл успешно сохранён");
+        ui->label->setText("");
+        ui->label->setVisible(false);
+    }
+    else
+        addLog(3, "Ошибка при сохранении файла!");
+}
+
+
+void MainWindow::on_pushCancel_clicked()
+{
+    if (QFile::exists(tempWorkPath))
+        QFile::remove(tempWorkPath);
+
+    if (QFile::copy(tempBackupPath, tempWorkPath))
+    {
+        ui->pushCancel->setEnabled(false);
+        ui->label->setText("");
+        ui->label->setVisible(false);
+
+        loadFileToEditor(tempWorkPath);
+
+        addLog(4, "Изменения отменены. Восстановлено стартовое состояние.");
+    }
+    else
+        addLog(3, "Ошибка при отмене изменений!");
+}
+
+
+void MainWindow::on_pushCancelCipher_clicked()
+{
+    if (QFile::exists(tempCryptoPath))
+        QFile::remove(tempCryptoPath);
+    ui->pushCancelCipher->setEnabled(false);
+    EnDecTempFileNowActive = false;
+    loadFileToEditor(tempWorkPath);
+    ui->label->setText("");
+    ui->label->setVisible(false);
+}
+
+
+void MainWindow::on_sort_clicked()
+{
+    if (EnDecTempFileNowActive)
+    {
+        addLog(3, "Ошибка: Нельзя сортировать зашифрованный файл, иначе данные вернуть будет почти не возможно");
+        return;
+    }
+
+    SortConfig config;
+
+    int methodIndex = ui->comboBoxMethod->currentIndex();
+    if (methodIndex == 0)
+        config.method = SortMethod::Prefix;
+    else if (methodIndex == 1)
+        config.method = SortMethod::Alphabetical;
+    else if (methodIndex == 2)
+        config.method = SortMethod::WholeLine;
+    else if (methodIndex == 3)
+        config.method = SortMethod::PrefixAlphabetical;
+
+    int dupIndex = ui->comboBoxDuplicate->currentIndex();
+    if (dupIndex == 0)
+        config.dupMode = DuplicateMode::KeepAll;
+    else if (dupIndex == 1)
+        config.dupMode = DuplicateMode::Deduplicate;
+    else if (dupIndex == 2)
+        config.dupMode = DuplicateMode::MoveToEnd;
+
+    config.nChars = ui->SizePref->value();
+    config.includeGroupNames = ui->chkShowHeaders->isChecked();
+    config.keepRowFormatting = false;
+
+    std::vector<Group> resultGroups;
+
+    SortResult res = ProcessorSorting(config, tempWorkPath.toStdString(), resultGroups);
+
+    if (res == SortResult::Success)
+    {
+        SaveResultToFile(tempSortPath.toStdString(), resultGroups, config.includeGroupNames);
+
+        loadFileToEditor(tempSortPath);
+
+        ui->pushCancelSort->setEnabled(true);
+        SortTempFileNowActive = true;
+
+        ui->label->setText("Предпросмотр файла (Сортировка не сохранена)");
+        ui->label->setVisible(true);
+
+        addLog(1, "Сортировка успешно завершена");
+    }
+    else if (res == SortResult::EmptyFile)
+        addLog(2, "Файл пустой, сортировать нечего");
+    else
+        addLog(3, "Ошибка во время сортировки");
+}
+
+void MainWindow::on_pushCancelSort_clicked()
+{
+    if (QFile::exists(tempSortPath))
+        QFile::remove(tempSortPath);
+
+    ui->pushCancelSort->setEnabled(false);
+    SortTempFileNowActive = false;
+
+    loadFileToEditor(tempWorkPath);
+    ui->label->setText("");
+    ui->label->setVisible(false);
+}
+
+
+void MainWindow::on_pushHttpOpem_clicked()
+{
+    QList<QTableWidgetItem*> selectedItems = ui->tableWidget->selectedItems();
+
+    if (selectedItems.isEmpty())
+    {
+        addLog(2, "Немає виділених рядків для відкриття посилань!");
+        return;
+    }
+
+    bool isPrivate = ui->checkBoxOpenInPrivWindow->isChecked();
+    int openedCount = 0;
+
+    QString pF = qEnvironmentVariable("PROGRAMW6432");
+    QString pF86 = qEnvironmentVariable("PROGRAMFILES(X86)");
+    QString lApp = qEnvironmentVariable("LOCALAPPDATA");
+
+    for (QTableWidgetItem* item : selectedItems)
+    {
+        QString content = item->text().trimmed();
+        bool looksLikeLink = content.contains("http") || content.contains("www");
+
+        if (looksLikeLink)
+        {
+            if (!content.startsWith("http"))
+                content = "http://" + content;
+
+            if (isPrivate)
+            {
+                bool success = false;
+
+                auto tryLaunch = [&](const QString& exeName, const QStringList& paths, const QString& flag) -> bool
+                {
+                    for (const QString& p : paths)
+                        if (QFileInfo::exists(p))
+                            return QProcess::startDetached(p, QStringList() << flag << content);
+
+                    return QProcess::startDetached(exeName, QStringList() << flag << content);
+                };
+
+                if (tryLaunch("brave", {pF + "/BraveSoftware/Brave-Browser/Application/brave.exe", pF86 + "/BraveSoftware/Brave-Browser/Application/brave.exe"}, "--incognito"))
+                    success = true;
+                else if (tryLaunch("chrome", {pF + "/Google/Chrome/Application/chrome.exe", pF86 + "/Google/Chrome/Application/chrome.exe"}, "-incognito"))
+                    success = true;
+                else if (tryLaunch("opera", {lApp + "/Programs/Opera/launcher.exe"}, "--private"))
+                    success = true;
+                // 4. Opera GX
+                else if (tryLaunch("opera-gx", {lApp + "/Programs/Opera GX/launcher.exe"}, "--private"))
+                    success = true;
+                // 5. Edge
+                else if (tryLaunch("msedge", {pF + "/Microsoft/Edge/Application/msedge.exe", pF86 + "/Microsoft/Edge/Application/msedge.exe"}, "-inprivate"))
+                    success = true;
+
+                if (!success)
+                {
+                    addLog(2, "Браузери для приватного режиму не знайдені. Відкрито звичайно.");
+                    QDesktopServices::openUrl(QUrl(content));
+                }
+            }
+            else
+            {
+                QDesktopServices::openUrl(QUrl(content));
+            }
+
+            openedCount++;
+
+            QEventLoop loop;
+            QTimer::singleShot(150, &loop, &QEventLoop::quit);
+            loop.exec();
+        }
+    }
+
+    if (openedCount > 0)
+        addLog(1, QString("Успішно відкрито посилань: %1").arg(openedCount));
+    else
+        addLog(2, "У виділених рядках не знайдено посилань.");
 }
 

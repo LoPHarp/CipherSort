@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1403</width>
-    <height>891</height>
+    <width>1411</width>
+    <height>1008</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -160,6 +160,9 @@
            <layout class="QVBoxLayout" name="verticalLayout_12">
             <item>
              <layout class="QVBoxLayout" name="verticalLayout_6">
+              <property name="sizeConstraint">
+               <enum>QLayout::SizeConstraint::SetFixedSize</enum>
+              </property>
               <item>
                <widget class="QLabel" name="label_2">
                 <property name="text">
@@ -168,7 +171,14 @@
                </widget>
               </item>
               <item>
-               <widget class="QLineEdit" name="inPassword"/>
+               <widget class="QLineEdit" name="inPassword">
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>20</height>
+                 </size>
+                </property>
+               </widget>
               </item>
               <item>
                <widget class="QCheckBox" name="viewPass">
@@ -193,6 +203,13 @@
              </widget>
             </item>
             <item>
+             <widget class="QPushButton" name="pushCancelCipher">
+              <property name="text">
+               <string>Отменить действие</string>
+              </property>
+             </widget>
+            </item>
+            <item>
              <layout class="QVBoxLayout" name="verticalLayout_7">
               <item>
                <widget class="QLabel" name="label_3">
@@ -210,6 +227,9 @@
                   </property>
                   <property name="text">
                    <string>RC4</string>
+                  </property>
+                  <property name="checkable">
+                   <bool>true</bool>
                   </property>
                   <property name="checked">
                    <bool>true</bool>
@@ -234,13 +254,6 @@
           </widget>
          </item>
          <item>
-          <widget class="Line" name="line_4">
-           <property name="orientation">
-            <enum>Qt::Orientation::Horizontal</enum>
-           </property>
-          </widget>
-         </item>
-         <item>
           <widget class="QGroupBox" name="groupBox_2">
            <property name="title">
             <string>Сортировка</string>
@@ -249,6 +262,26 @@
             <set>Qt::AlignmentFlag::AlignCenter</set>
            </property>
            <layout class="QVBoxLayout" name="verticalLayout_11">
+            <item>
+             <widget class="QPushButton" name="sort">
+              <property name="minimumSize">
+               <size>
+                <width>0</width>
+                <height>40</height>
+               </size>
+              </property>
+              <property name="text">
+               <string>Соритровать</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="pushCancelSort">
+              <property name="text">
+               <string>Отменить действие</string>
+              </property>
+             </widget>
+            </item>
             <item>
              <layout class="QVBoxLayout" name="verticalLayout_9">
               <item>
@@ -328,14 +361,14 @@
               </item>
              </layout>
             </item>
+            <item>
+             <widget class="QCheckBox" name="chkShowHeaders">
+              <property name="text">
+               <string>Разделять группы</string>
+              </property>
+             </widget>
+            </item>
            </layout>
-          </widget>
-         </item>
-         <item>
-          <widget class="Line" name="line_5">
-           <property name="orientation">
-            <enum>Qt::Orientation::Horizontal</enum>
-           </property>
           </widget>
          </item>
          <item>
@@ -371,7 +404,20 @@
           </widget>
          </item>
          <item>
-          <widget class="Line" name="line_6">
+          <widget class="QPushButton" name="pushCancel">
+           <property name="minimumSize">
+            <size>
+             <width>0</width>
+             <height>40</height>
+            </size>
+           </property>
+           <property name="text">
+            <string>Отменить все изменения</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="Line" name="line_7">
            <property name="orientation">
             <enum>Qt::Orientation::Horizontal</enum>
            </property>
@@ -379,19 +425,6 @@
          </item>
          <item>
           <layout class="QVBoxLayout" name="verticalLayout_3">
-           <item>
-            <widget class="QPushButton" name="pushCancel">
-             <property name="minimumSize">
-              <size>
-               <width>0</width>
-               <height>40</height>
-              </size>
-             </property>
-             <property name="text">
-              <string>Отменить изменения</string>
-             </property>
-            </widget>
-           </item>
            <item>
             <widget class="QPushButton" name="Save">
              <property name="sizePolicy">
@@ -484,7 +517,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1403</width>
+     <width>1411</width>
      <height>21</height>
     </rect>
    </property>
